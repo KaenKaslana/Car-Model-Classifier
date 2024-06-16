@@ -284,3 +284,19 @@ if __name__ == "__main__":
     print(f'The predicted class is: {prediction}')
 ```
 This script will load the trained model, preprocess the input image, and print the predicted car model.
+
+## Future Work
+
+This is version 1.0 of the Car-Model-Classifier. Future updates will include:
+- Adding more car models to the dataset.
+- Improving the model architecture for better accuracy.
+- Implementing a web interface for easy image upload and model prediction.
+- Adding more data augmentation techniques to improve model robustness.
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and submit a pull request for any enhancements or bug fixes.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
