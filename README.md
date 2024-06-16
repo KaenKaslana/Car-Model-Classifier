@@ -45,6 +45,10 @@ This repository contains the implementation of a car model classifier using a VG
 
 ### Model Training
 
+**Download the Dataset**:
+    - The dataset used for training is not included in this repository due to size constraints.
+    - You can download the dataset from [Kaggle](https://www.kaggle.com/datasets/occultainsights/honda-cars-over-11k-labeled-images?resource=download).
+    
 To train the model, prepare your dataset and run the training script:
 
 1. Place your dataset and annotation file in the appropriate directories.
