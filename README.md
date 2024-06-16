@@ -51,7 +51,7 @@ To train the model, prepare your dataset and run the training script:
 2. Modify the paths in the training script if necessary.
 3. Run the training script:
     ```sh
-    python scripts/train.py
+    python train.py
     ```
 
 ### Model Inference
@@ -62,7 +62,7 @@ To use the trained model for prediction:
 2. Place the image you want to predict in the `Put_your_Image_here` folder.
 3. Use the inference script to predict the car model from an image:
     ```sh
-    python scripts/predict.py --image_path Put_your_Image_here/image.jpg
+    python Car_Detector.py --image_path Put_your_Image_here/image.jpg
     ```
 
 ### Generate Annotation File
