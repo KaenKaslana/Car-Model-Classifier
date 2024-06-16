@@ -282,3 +282,5 @@ if __name__ == "__main__":
     model = load_model(model_path)
     prediction = predict(model, args.image_path)
     print(f'The predicted class is: {prediction}')
+```
+This script will load the trained model, preprocess the input image, and print the predicted car model.
