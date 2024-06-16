@@ -79,22 +79,206 @@ To generate the annotation file required for training:
 
 Detailed instructions on how to train the model using your dataset. This includes preprocessing steps, data augmentation, and training parameters.
 
+#### Step 1: Prepare Your Dataset
+
+1. **Organize your dataset**:
+    - Ensure your dataset is organized in folders, where each folder is named after the class label it contains.
+    - Place all class folders in a parent directory (e.g., `honda_cars`).
+
+    ```
+    honda_cars/
+    ├── accord/
+    │   ├── img1.jpg
+    │   ├── img2.jpg
+    │   └── ...
+    ├── amaze/
+    │   ├── img1.jpg
+    │   ├── img2.jpg
+    │   └── ...
+    ├── ...
+    └── vezel/
+        ├── img1.jpg
+        ├── img2.jpg
+        └── ...
+    ```
+
+2. **Generate the annotation file**:
+    - Use the `txt.py` script to create an annotation file that lists the paths and labels of all images.
+
+    ```sh
+    python txt.py
+    ```
+
+    This will generate a `cls_honda_cars.txt` file.
+
+#### Step 2: Preprocessing and Data Augmentation
+
+The `DataGenerator` class in `data.py` handles preprocessing and data augmentation. Here are the main steps:
+
+1. **Convert images to RGB**:
+    - Ensure all images are in RGB format using the `cvtColor` function.
+
+    ```python
+    def cvtColor(image):
+        if len(np.shape(image)) == 3 and np.shape(image)[-2] == 3:
+            return image
+        else:
+            image = image.convert('RGB')
+            return image
+    ```
+
+2. **Resize images and apply random transformations**:
+    - Resize images to the input shape (224x224) and apply random transformations such as flipping and color jitter.
+
+    ```python
+    def get_random_data(image, input_shape, jitter=.3, hue=.1, sat=1.5, val=1.5, random=True):
+        # Resize and augment images
+        # Apply random transformations
+    ```
+
+3. **Normalize images**:
+    - Normalize image pixel values to the range [-1, 1].
+
+    ```python
+    def preprocess_input(x):
+        x /= 127.5
+        x -= 1.
+        return x
+    ```
+
+#### Step 3: Training Parameters
+
+1. **Define the model**:
+    - Use the `vgg16` function from `net.py` to create a VGG16 model with pretrained weights.
+
+    ```python
+    from net import vgg16
+
+    net = vgg16(pretrained=True, progress=True, num_classes=17)
+    ```
+
+2. **Set up the optimizer and learning rate scheduler**:
+    - Use the Adam optimizer with a learning rate of 0.0001.
+    - Use a StepLR scheduler to adjust the learning rate.
+
+    ```python
+    import torch.optim as optim
+
+    lr = 0.0001
+    optimizer = optim.Adam(net.parameters(), lr=lr)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
+    ```
+
+3. **Create data loaders**:
+    - Use `DataLoader` to create training and validation data loaders with a batch size of 128.
+
+    ```python
+    from torch.utils.data import DataLoader
+
+    train_data = DataGenerator(train_lines, input_shape, True)
+    val_data = DataGenerator(val_lines, input_shape, False)
+
+    batch_size = 128
+    gen_train = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=4)
+    gen_val = DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=4)
+    ```
+
+4. **Train the model**:
+    - Train the model for 10 epochs, saving the model weights after each epoch.
+
+    ```python
+    epochs = 10
+    for epoch in range(epochs):
+        net.train()
+        total_train_loss = 0
+        for data in gen_train:
+            img, label = data
+            img, label = img.to(device), label.to(device)
+            optimizer.zero_grad()
+            outputs = net(img)
+            loss = nn.CrossEntropyLoss()(outputs, label)
+            loss.backward()
+            optimizer.step()
+            total_train_loss += loss.item()
+
+        scheduler.step()
+
+        total_val_loss = 0
+        total_correct = 0
+        net.eval()
+        with torch.no_grad():
+            for data in gen_val:
+                img, label = data
+                img, label = img.to(device), label.to(device)
+                outputs = net(img)
+                loss = nn.CrossEntropyLoss()(outputs, label)
+                total_val_loss += loss.item()
+                total_correct += (outputs.argmax(1) == label).sum().item()
+
+        avg_train_loss = total_train_loss / len(gen_train)
+        avg_val_loss = total_val_loss / len(gen_val)
+        accuracy = total_correct / len(val_data)
+
+        print(f'Epoch {epoch+1}/{epochs}, Train Loss: {avg_train_loss}, Val Loss: {avg_val_loss}, Accuracy: {accuracy:.2%}')
+        torch.save(net.state_dict(), f'Trained_Parameters/Car_{epoch+1}.pth')
+        print(f'Model saved for epoch {epoch+1}')
+    ```
+
+By following these steps, you can train the VGG16 model on your dataset and save the trained model weights.
+
 ## Model Inference
 
 Detailed instructions on how to use the trained model to predict car models from new images. This section explains how to load the model and perform inference on single or multiple images.
 
-## Future Work
+To use the trained model to predict car models from new images, follow these steps:
 
-This is version 1.0 of the Car-Model-Classifier. Future updates will include:
-- Adding more car models to the dataset.
-- Improving the model architecture for better accuracy.
-- Implementing a web interface for easy image upload and model prediction.
-- Adding more data augmentation techniques to improve model robustness.
+1. **Place the image for prediction**:
+    - Place the image you want to predict in the `Put_your_Image_here` folder and name it `image.jpg`.
 
-## Contributing
+2. **Run the inference script**:
+    - Use the `Car_Detector.py` script to load the trained model and perform inference on the image.
 
-Contributions are welcome! Please fork the repository and submit a pull request for any enhancements or bug fixes.
+    ```sh
+    python Car_Detector.py --image_path Put_your_Image_here/image.jpg
+    ```
 
-## License
+#### Example `Car_Detector.py`
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+```python
+import torch
+import torch.nn as nn
+from torchvision import transforms
+from PIL import Image
+import argparse
+from net import vgg16  # Ensure your net.py contains vgg16 definition
+import os
+
+classes = ['accord', 'amaze', 'brio', 'city', 'civic', 'clarity', 'freed', 'insight', 'legend', 'mobilo', 'nsx', 'odyssey', 'passport', 'pilot', 'ridgeline', 's660', 'vezel']
+
+def load_model(model_path, num_classes=17):
+    model = vgg16(pretrained=False, num_classes=num_classes)
+    model.load_state_dict(torch.load(model_path))
+    model.eval()
+    return model
+
+def predict(model, image_path):
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+    image = Image.open(image_path).convert('RGB')
+    image = transform(image).unsqueeze(0)
+    outputs = model(image)
+    _, preds = torch.max(outputs, 1)
+    return classes[preds]
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--image_path', type=str, default='Put_your_Image_here/image.jpg', help='Path to the image')
+    args = parser.parse_args()
+    
+    model_path = 'Trained_Parameters/Car_10.pth'
+    model = load_model(model_path)
+    prediction = predict(model, args.image_path)
+    print(f'The predicted class is: {prediction}')
