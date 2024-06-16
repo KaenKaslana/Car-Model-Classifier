@@ -51,7 +51,7 @@ To train the model, prepare your dataset and run the training script:
 2. Modify the paths in the training script if necessary.
 3. Run the training script:
     ```sh
-    python train.py
+    python scripts/train.py
     ```
 
 ### Model Inference
@@ -59,10 +59,21 @@ To train the model, prepare your dataset and run the training script:
 To use the trained model for prediction:
 
 1. Ensure you have the trained model weights saved as `Car_10.pth` or the appropriate epoch file.
-2. Use the inference script to predict the car model from an image:
+2. Place the image you want to predict in the `Put_your_Image_here` folder.
+3. Use the inference script to predict the car model from an image:
     ```sh
-    python predict.py --image_path path/to/your/image.jpg
+    python scripts/predict.py --image_path Put_your_Image_here/image.jpg
     ```
+
+### Generate Annotation File
+
+To generate the annotation file required for training:
+
+1. Run the `txt.py` script:
+    ```sh
+    python txt.py
+    ```
+   This will create a `cls_honda_cars.txt` file with labels and paths for images in the `honda_cars` dataset.
 
 ## Model Training
 
